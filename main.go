@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,16 +14,21 @@ type Todo struct {
 }
 
 func main() {
-	todos := readTodos()
+
 	for {
+		todos := readTodos()
+
 		fmt.Println("1. Add todo")
 		fmt.Println("2. List todos")
 		fmt.Println("3. Delete todo")
 		fmt.Println("4. Update todo")
 		fmt.Println("5. Exit")
 		fmt.Print("Enter your choice: ")
+
 		var choice int
+
 		fmt.Scanln(&choice)
+
 		switch choice {
 		case 1:
 			addTodo()
@@ -33,23 +39,26 @@ func main() {
 		case 4:
 			updateTodo()
 		case 5:
-			saveTodos(todos)
 			os.Exit(0)
 		}
 	}
 }
 
 func readTodos() []Todo {
+
 	file, err := os.Open("todos.json")
 	if err != nil {
 		return []Todo{}
 	}
 	defer file.Close()
+
 	data, err := io.ReadAll(file)
 	if err != nil {
 		return []Todo{}
 	}
+
 	var todos []Todo
+
 	err = json.Unmarshal(data, &todos)
 	if err != nil {
 		return []Todo{}
@@ -58,11 +67,13 @@ func readTodos() []Todo {
 }
 
 func saveTodos(todos []Todo) {
+
 	data, err := json.Marshal(todos)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+
 	err = os.WriteFile("todos.json", data, 0644)
 	if err != nil {
 		fmt.Println(err)
@@ -71,9 +82,13 @@ func saveTodos(todos []Todo) {
 }
 
 func addTodo() {
+
 	var task string
 	fmt.Print("Enter task: ")
-	fmt.Scanln(&task)
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	task = scanner.Text()
+	fmt.Println("The task is " + task)
 	todos := readTodos()
 	todo := Todo{ID: len(todos) + 1, Task: task}
 	todos = append(todos, todo)
@@ -81,17 +96,23 @@ func addTodo() {
 }
 
 func listTodos(todos []Todo) {
+
 	for _, todo := range todos {
 		fmt.Printf("%d. %s\n", todo.ID, todo.Task)
 	}
+
 }
 
 func deleteTodo() {
+
 	todos := readTodos()
+
 	listTodos(todos)
 	var id int
+
 	fmt.Print("Enter id to delete: ")
 	fmt.Scanln(&id)
+
 	for i, todo := range todos {
 		if todo.ID == id {
 			todos = append(todos[:i], todos[i+1:]...)
@@ -109,7 +130,10 @@ func updateTodo() {
 	fmt.Scanln(&id)
 	var task string
 	fmt.Print("Enter new task: ")
-	fmt.Scanln(&task)
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	task = scanner.Text()
+
 	for i, todo := range todos {
 		if todo.ID == id {
 			todo.Task = task
