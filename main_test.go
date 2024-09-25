@@ -57,3 +57,39 @@ func TestReadTodos(t *testing.T) {
 		}
 	}
 }
+func TestSaveTodos(t *testing.T) {
+	// Create some test data
+	todos := []Todo{
+		{ID: 1, Task: "Test task 1"},
+		{ID: 2, Task: "Test task 2"},
+	}
+
+	// Call the function
+	saveTodos(todos)
+
+	// Read the file back
+	data, err := os.ReadFile("todos.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove("todos.json") // clean up
+
+	// Read the JSON data and convert it back into a Go object
+	var readTodos []Todo
+	err = json.Unmarshal(data, &readTodos)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Check the results
+	if len(readTodos) != len(todos) {
+		t.Errorf("Expected %d todos, got %d", len(todos), len(readTodos))
+	}
+
+	// Check each todo
+	for i, todo := range readTodos {
+		if todo.ID != todos[i].ID || todo.Task != todos[i].Task {
+			t.Errorf("Expected todo %v, got %v", todos[i], todo)
+		}
+	}
+}
