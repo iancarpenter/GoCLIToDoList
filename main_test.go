@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"os"
 	"testing"
 )
@@ -91,5 +93,36 @@ func TestSaveTodos(t *testing.T) {
 		if todo.ID != todos[i].ID || todo.Task != todos[i].Task {
 			t.Errorf("Expected todo %v, got %v", todos[i], todo)
 		}
+	}
+}
+func TestListTodos(t *testing.T) {
+	// Capture the output of the function
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	// Create some test data
+	todos := []Todo{
+		{ID: 1, Task: "Test task 1"},
+		{ID: 2, Task: "Test task 2"},
+	}
+
+	// Call the function
+	listTodos(todos)
+
+	// Restore the original stdout
+	w.Close()
+	os.Stdout = old
+
+	// Read the captured output
+	var buf bytes.Buffer
+	io.Copy(&buf, r)
+
+	// Expected output
+	expectedOutput := "1. Test task 1\n2. Test task 2\n"
+
+	// Check the results
+	if buf.String() != expectedOutput {
+		t.Errorf("Expected output %q, got %q", expectedOutput, buf.String())
 	}
 }
