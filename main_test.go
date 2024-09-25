@@ -285,3 +285,92 @@ func TestDeleteTodo(t *testing.T) {
 		t.Errorf("Expected task %q, got %q", expectedTask, readTodos[0].Task)
 	}
 }
+func TestUpdateTodo(t *testing.T) {
+
+	const fileName = "todos.json"
+
+	// Create a temporary file
+	tmpfile, err := os.CreateTemp("", fileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(tmpfile.Name()) // clean up
+
+	// Write some test data to the temporary file
+	todos := []Todo{
+		{ID: 1, Task: "Test task 1"},
+		{ID: 2, Task: "Test task 2"},
+	}
+
+	data, err := json.Marshal(todos)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := tmpfile.Write(data); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := tmpfile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Rename the temporary file to "todos.json" to match the function's expectation
+	if err := os.Rename(tmpfile.Name(), fileName); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(fileName) // clean up
+
+	// Simulate user input
+	input := "1\nUpdated task\n"
+	r, w, _ := os.Pipe()
+	oldStdin := os.Stdin
+	os.Stdin = r
+
+	// Write the input to the pipe
+	go func() {
+		w.Write([]byte(input))
+		w.Close()
+	}()
+
+	// Capture the output of the function
+	oldStdout := os.Stdout
+	rOut, wOut, _ := os.Pipe()
+	os.Stdout = wOut
+
+	// Call the function
+	updateTodo()
+
+	// Restore the original stdin and stdout
+	os.Stdin = oldStdin
+	wOut.Close()
+	os.Stdout = oldStdout
+
+	// Read the captured output
+	var buf bytes.Buffer
+	io.Copy(&buf, rOut)
+
+	// Read the file back
+	data, err = os.ReadFile(fileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Read the JSON data and convert it back into a Go object
+	var readTodos []Todo
+	err = json.Unmarshal(data, &readTodos)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Check the results
+	if len(readTodos) != 2 {
+		t.Errorf("Expected 2 todos, got %d", len(readTodos))
+	}
+
+	// Check the updated todo
+	expectedTask := "Updated task"
+	if readTodos[0].Task != expectedTask {
+		t.Errorf("Expected task %q, got %q", expectedTask, readTodos[0].Task)
+	}
+}
