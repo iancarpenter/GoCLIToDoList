@@ -9,8 +9,11 @@ import (
 )
 
 func TestReadTodos(t *testing.T) {
+
+	const fileName = "todos.json"
+
 	// Create a temporary file
-	tmpfile, err := os.CreateTemp("", "todos.json")
+	tmpfile, err := os.CreateTemp("", fileName)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,10 +42,10 @@ func TestReadTodos(t *testing.T) {
 	}
 
 	// Rename the temporary file to "todos.json" to match the function's expectation
-	if err := os.Rename(tmpfile.Name(), "todos.json"); err != nil {
+	if err := os.Rename(tmpfile.Name(), fileName); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove("todos.json") // clean up
+	defer os.Remove(fileName) // clean up
 
 	// Call the function
 	readTodos := readTodos()
@@ -60,6 +63,9 @@ func TestReadTodos(t *testing.T) {
 	}
 }
 func TestSaveTodos(t *testing.T) {
+
+	const fileName = "todos.json"
+
 	// Create some test data
 	todos := []Todo{
 		{ID: 1, Task: "Test task 1"},
@@ -70,11 +76,11 @@ func TestSaveTodos(t *testing.T) {
 	saveTodos(todos)
 
 	// Read the file back
-	data, err := os.ReadFile("todos.json")
+	data, err := os.ReadFile(fileName)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove("todos.json") // clean up
+	defer os.Remove(fileName) // clean up
 
 	// Read the JSON data and convert it back into a Go object
 	var readTodos []Todo
@@ -186,6 +192,95 @@ func TestAddTodo(t *testing.T) {
 
 	// Check the added todo
 	expectedTask := "New task"
+	if readTodos[0].Task != expectedTask {
+		t.Errorf("Expected task %q, got %q", expectedTask, readTodos[0].Task)
+	}
+}
+func TestDeleteTodo(t *testing.T) {
+
+	const fileName = "todos.json"
+
+	// Create a temporary file
+	tmpfile, err := os.CreateTemp("", fileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(tmpfile.Name()) // clean up
+
+	// Write some test data to the temporary file
+	todos := []Todo{
+		{ID: 1, Task: "Test task 1"},
+		{ID: 2, Task: "Test task 2"},
+	}
+
+	data, err := json.Marshal(todos)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := tmpfile.Write(data); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := tmpfile.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Rename the temporary file to "todos.json" to match the function's expectation
+	if err := os.Rename(tmpfile.Name(), fileName); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(fileName) // clean up
+
+	// Simulate user input
+	input := "1\n"
+	r, w, _ := os.Pipe()
+	oldStdin := os.Stdin
+	os.Stdin = r
+
+	// Write the input to the pipe
+	go func() {
+		w.Write([]byte(input))
+		w.Close()
+	}()
+
+	// Capture the output of the function
+	oldStdout := os.Stdout
+	rOut, wOut, _ := os.Pipe()
+	os.Stdout = wOut
+
+	// Call the function
+	deleteTodo()
+
+	// Restore the original stdin and stdout
+	os.Stdin = oldStdin
+	wOut.Close()
+	os.Stdout = oldStdout
+
+	// Read the captured output
+	var buf bytes.Buffer
+	io.Copy(&buf, rOut)
+
+	// Read the file back
+	data, err = os.ReadFile(fileName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Read the JSON data and convert it back into a Go object
+	var readTodos []Todo
+	err = json.Unmarshal(data, &readTodos)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Check the results
+	if len(readTodos) != 1 {
+		t.Errorf("Expected 1 todo, got %d", len(readTodos))
+	}
+
+	// Check the remaining todo
+	expectedTask := "Test task 2"
 	if readTodos[0].Task != expectedTask {
 		t.Errorf("Expected task %q, got %q", expectedTask, readTodos[0].Task)
 	}
