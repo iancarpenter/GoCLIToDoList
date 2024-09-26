@@ -13,6 +13,8 @@ type Todo struct {
 	Task string `json:"task"`
 }
 
+const fileName = "todos.json"
+
 func main() {
 
 	for {
@@ -46,7 +48,7 @@ func main() {
 
 func readTodos() []Todo {
 
-	file, err := os.Open("todos.json")
+	file, err := os.Open(fileName)
 	if err != nil {
 		return []Todo{}
 	}
@@ -74,7 +76,7 @@ func saveTodos(todos []Todo) {
 		return
 	}
 
-	err = os.WriteFile("todos.json", data, 0644)
+	err = os.WriteFile(fileName, data, 0644)
 	if err != nil {
 		fmt.Println(err)
 		return
