@@ -24,12 +24,18 @@ func main() {
 	}
 }
 
+// getChoice reads an integer input from the user and returns it.
+// It uses fmt.Scanln to capture the input and stores it in the variable 'choice'.
+// Returns:
+//
+//	int: The integer value entered by the user.
 func getChoice() int {
 	var choice int
 	fmt.Scanln(&choice)
 	return choice
 }
 
+// handleChoice takes an integer choice and a slice of todos as input.
 func handleChoice(choice int, todos []Todo) {
 	switch choice {
 	case 1:
@@ -45,6 +51,7 @@ func handleChoice(choice int, todos []Todo) {
 	}
 }
 
+// printMenu prints the menu options to the console.
 func printMenu() {
 	fmt.Println("1. Add todo")
 	fmt.Println("2. List todos")
@@ -54,6 +61,7 @@ func printMenu() {
 	fmt.Print("Enter your choice: ")
 }
 
+// readTodos reads the todos from the file and returns them.
 func readTodos() []Todo {
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -75,6 +83,7 @@ func readTodos() []Todo {
 	return todos
 }
 
+// saveTodos saves the todos to the file.
 func saveTodos(todos []Todo) {
 	data, err := json.Marshal(todos)
 	if err != nil {
@@ -89,6 +98,7 @@ func saveTodos(todos []Todo) {
 	}
 }
 
+// addTodo adds a new todo to the list.
 func addTodo() {
 	var task string
 	fmt.Print("Enter task: ")
@@ -102,12 +112,14 @@ func addTodo() {
 	saveTodos(todos)
 }
 
+// listTodos lists all the todos to the console.
 func listTodos(todos []Todo) {
 	for _, todo := range todos {
 		fmt.Printf("%d. %s\n", todo.ID, todo.Task)
 	}
 }
 
+// deleteTodo deletes a todo from the list.
 func deleteTodo() {
 	todos := readTodos()
 	listTodos(todos)
@@ -123,6 +135,7 @@ func deleteTodo() {
 	}
 }
 
+// updateTodo updates a todo in the list.
 func updateTodo() {
 	todos := readTodos()
 	listTodos(todos)
